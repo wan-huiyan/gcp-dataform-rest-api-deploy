@@ -13,17 +13,26 @@ Or use the documented bash patterns directly in CI/CD pipelines, Cloud Workflows
 
 ## Installation
 
-**Claude Code:**
+### Claude Code
+
 ```bash
-# Git clone
+# Plugin install (recommended)
+/plugin marketplace add wan-huiyan/gcp-dataform-rest-api-deploy
+/plugin install gcp-dataform-rest-api-deploy@wan-huiyan-gcp-dataform-rest-api-deploy
+
+# Git clone (always works)
 git clone https://github.com/wan-huiyan/gcp-dataform-rest-api-deploy.git ~/.claude/skills/gcp-dataform-rest-api-deploy
 ```
 
-**Cursor (2.4+):**
+### Cursor (2.4+)
+
 ```bash
 # Per-project rule (most reliable)
 mkdir -p .cursor/rules
 # Copy SKILL.md content into .cursor/rules/gcp-dataform-rest-api-deploy.mdc with alwaysApply: true
+
+# npx skills CLI
+npx skills add wan-huiyan/gcp-dataform-rest-api-deploy --global
 
 # Manual global install
 git clone https://github.com/wan-huiyan/gcp-dataform-rest-api-deploy.git ~/.cursor/skills/gcp-dataform-rest-api-deploy
