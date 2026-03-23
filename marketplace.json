@@ -1,0 +1,10 @@
+{
+  "name": "wan-huiyan-gcp-dataform-rest-api-deploy",
+  "owner": { "name": "Huiyan Wan" },
+  "plugins": [{
+    "name": "gcp-dataform-rest-api-deploy",
+    "source": ".",
+    "description": "Deploy .sqlx files to Google Cloud Dataform via REST API without the CLI",
+    "version": "1.0.0"
+  }]
+}
