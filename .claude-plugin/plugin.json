@@ -1,7 +1,7 @@
 {
   "name": "gcp-dataform-rest-api-deploy",
   "description": "Deploy .sqlx files to Google Cloud Dataform via REST API — covers writeFile, commit, push, compile, invoke, and poll lifecycle with gotcha documentation",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": { "name": "Huiyan Wan" },
   "repository": "https://github.com/wan-huiyan/gcp-dataform-rest-api-deploy",
   "license": "MIT",

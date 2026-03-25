@@ -1,0 +1,226 @@
+{
+  "skill": "gcp-dataform-rest-api-deploy",
+  "version": "1.1.0",
+  "assertions": [
+    {
+      "id": "trigger-deploy-sqlx",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "How do I deploy .sqlx files to Dataform using the REST API?",
+      "expected": "should_activate",
+      "category": "core-deploy"
+    },
+    {
+      "id": "trigger-cicd-dataform",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "I need to deploy Dataform models from my CI/CD pipeline without the CLI",
+      "expected": "should_activate",
+      "category": "core-deploy"
+    },
+    {
+      "id": "trigger-cloud-workflows",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "How do I trigger Dataform compilation and invocation from Cloud Workflows?",
+      "expected": "should_activate",
+      "category": "cloud-workflows"
+    },
+    {
+      "id": "trigger-404-colon",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "I'm getting a 404 error when calling the Dataform writeFile endpoint",
+      "expected": "should_activate",
+      "category": "error-diagnosis"
+    },
+    {
+      "id": "trigger-unknown-name",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "Dataform commit returns 'Unknown name fileOperations' error",
+      "expected": "should_activate",
+      "category": "error-diagnosis"
+    },
+    {
+      "id": "trigger-curl-dataform",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "Show me how to use curl to write a file to a Dataform workspace",
+      "expected": "should_activate",
+      "category": "core-deploy"
+    },
+    {
+      "id": "trigger-poll-invocation",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "How do I poll a Dataform workflow invocation for completion?",
+      "expected": "should_activate",
+      "category": "lifecycle"
+    },
+    {
+      "id": "trigger-compile-invoke",
+      "type": "trigger",
+      "polarity": "positive",
+      "input": "I need to create a compilation result and then invoke specific targets via Dataform API",
+      "expected": "should_activate",
+      "category": "lifecycle"
+    },
+    {
+      "id": "trigger-neg-cli",
+      "type": "trigger",
+      "polarity": "negative",
+      "input": "How do I install and use the Dataform CLI?",
+      "expected": "should_not_activate",
+      "category": "out-of-scope"
+    },
+    {
+      "id": "trigger-neg-dbt",
+      "type": "trigger",
+      "polarity": "negative",
+      "input": "How do I deploy dbt models to BigQuery?",
+      "expected": "should_not_activate",
+      "category": "out-of-scope"
+    },
+    {
+      "id": "trigger-neg-bq-sql",
+      "type": "trigger",
+      "polarity": "negative",
+      "input": "Write a BigQuery SQL query to aggregate sales data",
+      "expected": "should_not_activate",
+      "category": "out-of-scope"
+    },
+    {
+      "id": "trigger-neg-web-ui",
+      "type": "trigger",
+      "polarity": "negative",
+      "input": "How do I create a Dataform repository in the Google Cloud Console?",
+      "expected": "should_not_activate",
+      "category": "out-of-scope"
+    },
+    {
+      "id": "quality-full-lifecycle",
+      "type": "quality",
+      "input": "Deploy a new .sqlx model to Dataform via the REST API and run it",
+      "expected_contains": [":writeFile", ":commit", ":push", "compilationResults", "workflowInvocations"],
+      "expected_not_contains": ["dataform CLI", "npm install"],
+      "category": "core-deploy"
+    },
+    {
+      "id": "quality-base64",
+      "type": "quality",
+      "input": "How do I write a file to a Dataform workspace via the API?",
+      "expected_contains": ["base64", "contents", ":writeFile"],
+      "category": "core-deploy"
+    },
+    {
+      "id": "quality-commit-fields",
+      "type": "quality",
+      "input": "What fields does the Dataform commit endpoint expect?",
+      "expected_contains": ["paths", "author", "commitMessage"],
+      "expected_not_contains": ["fileOperations"],
+      "category": "gotchas"
+    },
+    {
+      "id": "quality-colon-prefix",
+      "type": "quality",
+      "input": "Why am I getting 404 on Dataform API writeFile calls?",
+      "expected_contains": [":writeFile", "colon"],
+      "category": "error-diagnosis"
+    },
+    {
+      "id": "quality-empty-response",
+      "type": "quality",
+      "input": "The Dataform writeFile API returned an empty JSON object, is that an error?",
+      "expected_contains": ["success", "{}"],
+      "category": "gotchas"
+    },
+    {
+      "id": "quality-region-mismatch",
+      "type": "quality",
+      "input": "My Dataform API calls are failing, could it be a region issue?",
+      "expected_contains": ["region", "Cloud Run"],
+      "category": "gotchas"
+    },
+    {
+      "id": "quality-release-config-path",
+      "type": "quality",
+      "input": "How do I reference a release config when creating a compilation result?",
+      "expected_contains": ["releaseConfig", "projects/", "releaseConfigs/"],
+      "category": "lifecycle"
+    },
+    {
+      "id": "quality-failure-debug",
+      "type": "quality",
+      "input": "My Dataform invocation failed. How do I find out which action failed and why?",
+      "expected_contains": [":query", "failureReason", "workflowInvocationActions"],
+      "category": "error-diagnosis"
+    },
+    {
+      "id": "quality-cloud-workflows",
+      "type": "quality",
+      "input": "How do I call Dataform API from a Cloud Workflow?",
+      "expected_contains": ["http.post", "OAuth2"],
+      "category": "cloud-workflows"
+    },
+    {
+      "id": "quality-verification",
+      "type": "quality",
+      "input": "How do I verify that each step of the Dataform deploy succeeded?",
+      "expected_contains": ["{}", "name", "SUCCEEDED"],
+      "category": "lifecycle"
+    },
+    {
+      "id": "edge-multiple-files",
+      "type": "edge",
+      "input": "I need to deploy 5 .sqlx files at once to Dataform via the API",
+      "expected_contains": ["writeFile", "paths"],
+      "expected_behavior": "Should mention calling writeFile for each file and listing all paths in the commit",
+      "category": "multi-file"
+    },
+    {
+      "id": "edge-idempotent-commit",
+      "type": "edge",
+      "input": "What happens if I commit the same unchanged file twice to Dataform?",
+      "expected_behavior": "Should warn that commit is NOT idempotent and will error on unchanged files",
+      "category": "idempotency"
+    },
+    {
+      "id": "edge-auth-expired",
+      "type": "edge",
+      "input": "My Dataform API call returns 401 unauthorized during a long deploy",
+      "expected_contains": ["access token", "gcloud auth"],
+      "expected_behavior": "Should mention token expiration (default 1h) and refreshing the token",
+      "category": "auth"
+    },
+    {
+      "id": "edge-large-file",
+      "type": "edge",
+      "input": "Can I deploy a very large .sqlx file (>1MB) via the Dataform writeFile API?",
+      "expected_behavior": "Should mention potential payload size limits on the REST API",
+      "category": "limits"
+    },
+    {
+      "id": "edge-transitive-deps",
+      "type": "edge",
+      "input": "Should I set transitiveDependenciesIncluded to true or false when invoking Dataform?",
+      "expected_contains": ["transitiveDependenciesIncluded"],
+      "expected_behavior": "Should explain the difference: true runs upstream deps, false runs only specified targets",
+      "category": "invocation-config"
+    },
+    {
+      "id": "edge-no-release-config",
+      "type": "edge",
+      "input": "I don't have a release config in my Dataform repo, can I still compile?",
+      "expected_behavior": "Should mention compiling with a git commitish or workspace reference as alternatives to releaseConfig",
+      "category": "compilation-alternatives"
+    },
+    {
+      "id": "edge-concurrent-workspaces",
+      "type": "edge",
+      "input": "Can two CI/CD pipelines write to the same Dataform workspace simultaneously?",
+      "expected_behavior": "Should warn about race conditions with concurrent workspace writes and commits",
+      "category": "concurrency"
+    }
+  ]
+}
