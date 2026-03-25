@@ -8,39 +8,76 @@ description: |
   writeFile → commit → push → compile → invoke → poll for completion.
   Includes gotchas around base64 encoding, workspace path format, and the
   colon-prefixed action endpoints (:writeFile, :commit, :push).
+  NOT for: Dataform CLI usage, BigQuery direct SQL, Dataform web UI operations,
+  or non-GCP data pipeline tools (dbt, Airflow).
 author: Claude Code
-version: 1.0.0
-date: 2026-03-23
+version: 1.1.0
+date: 2026-03-25
+triggers:
+  positive:
+    - "deploy sqlx files to dataform"
+    - "dataform REST API"
+    - "dataform API writeFile"
+    - "dataform API commit push"
+    - "programmatically deploy to dataform"
+    - "dataform CI/CD deploy"
+    - "cloud workflows dataform"
+    - "dataform 404 colon endpoint"
+    - "dataform unknown name fileOperations"
+    - "dataform compilation invocation API"
+    - "curl dataform API"
+    - "automate dataform deployment"
+    - "dataform workflowInvocations"
+    - "dataform compilationResults API"
+    - "dataform base64 writeFile"
+  negative:
+    - "dataform CLI install"
+    - "dbt deploy"
+    - "bigquery SQL query"
+    - "dataform web UI"
+    - "airflow DAG"
+    - "dataform init project"
+composability:
+  consumes_from: ["gcloud-auth", "base64-encoding"]
+  hands_off_to: ["bigquery-query-validation", "cloud-workflows-orchestration"]
+  output_contract: |
+    On success: workflow invocation name (resource path string) + SUCCEEDED state.
+    On failure: FAILED state + action-level error details from :query endpoint.
+  error_behavior: |
+    - 404 → check colon-prefix on action endpoints (:writeFile, :commit, :push)
+    - "Unknown name fileOperations" → use `paths` field instead
+    - Empty {} response → success (not error) for writeFile/commit/push
+    - FAILED state → query :query endpoint for per-action failure reasons
+  idempotency: |
+    writeFile is idempotent (overwrites). commit+push are NOT idempotent —
+    re-committing unchanged files returns an error. Guard with a diff check.
 ---
 
 # GCP Dataform REST API Deploy
 
-## Problem
-Deploying .sqlx files to Dataform programmatically (from scripts, CI/CD, or
-automation) without the Dataform CLI. The REST API has non-obvious endpoint
-patterns and a specific workflow order.
+## When to Use This Skill
 
-## Context / Trigger Conditions
-- Need to deploy Dataform SQL files from a script or automation pipeline
-- Want to trigger specific Dataform targets after deployment
-- Cloud Workflows needs to invoke Dataform compilations and invocations
-- Error: 404 on Dataform API calls (URL formatting issue with colon actions)
-- Error: "Unknown name" in commit payload (wrong field names)
+| Scenario | Use this? | Why |
+|---|---|---|
+| Deploy .sqlx from CI/CD pipeline | Yes | REST API is the only option without CLI |
+| Trigger Dataform from Cloud Workflows | Yes | HTTP calls with OAuth2 auth |
+| Update workspace files programmatically | Yes | writeFile endpoint |
+| Use Dataform CLI locally | No | CLI handles this natively |
+| Write BigQuery SQL directly | No | Different API entirely |
+| Manage Dataform via web console | No | No API needed |
 
-## Solution
-
-### Full Deployment Lifecycle
+## Deployment Lifecycle (6 Steps)
 
 ```bash
 ACCESS_TOKEN=$(gcloud auth print-access-token)
 BASE="https://dataform.googleapis.com/v1beta1"
 PROJECT_ID="my-project"
-REGION="europe-north1"  # Dataform region (often different from Cloud Run region)
+REGION="europe-north1"  # Often different from Cloud Run region — check repo settings
 REPO="my-repo"
 WORKSPACE="my-workspace"
 WS_PATH="projects/$PROJECT_ID/locations/$REGION/repositories/$REPO/workspaces/$WORKSPACE"
 
-# Step 1: Write file to workspace (content must be base64-encoded)
+# 1. Write file (content MUST be base64-encoded)
 ENCODED=$(base64 -i path/to/file.sqlx)
 curl -s -X POST \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
@@ -48,7 +85,7 @@ curl -s -X POST \
   -d "{\"path\": \"definitions/my_model.sqlx\", \"contents\": \"$ENCODED\"}" \
   "${BASE}/${WS_PATH}:writeFile"
 
-# Step 2: Commit changes in the workspace
+# 2. Commit (use `paths`, NOT `fileOperations`)
 curl -s -X POST \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
@@ -59,14 +96,14 @@ curl -s -X POST \
   }' \
   "${BASE}/${WS_PATH}:commit"
 
-# Step 3: Push workspace to default branch
+# 3. Push to default branch
 curl -s -X POST \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{}' \
   "${BASE}/${WS_PATH}:push"
 
-# Step 4: Compile from release config
+# 4. Compile from release config
 COMPILE_RESULT=$(curl -s -X POST \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
@@ -74,7 +111,7 @@ COMPILE_RESULT=$(curl -s -X POST \
   "${BASE}/projects/$PROJECT_ID/locations/$REGION/repositories/$REPO/compilationResults")
 COMPILATION_NAME=$(echo $COMPILE_RESULT | python3 -c "import sys,json; print(json.load(sys.stdin)['name'])")
 
-# Step 5: Invoke specific targets
+# 5. Invoke specific targets
 INVOKE_RESULT=$(curl -s -X POST \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H "Content-Type: application/json" \
@@ -90,7 +127,7 @@ INVOKE_RESULT=$(curl -s -X POST \
   "${BASE}/projects/$PROJECT_ID/locations/$REGION/repositories/$REPO/workflowInvocations")
 INVOCATION_NAME=$(echo $INVOKE_RESULT | python3 -c "import sys,json; print(json.load(sys.stdin)['name'])")
 
-# Step 6: Poll for completion
+# 6. Poll for completion
 while true; do
   sleep 15
   STATE=$(curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
@@ -100,10 +137,10 @@ while true; do
 done
 ```
 
-### Checking Failure Details
+## Debugging Failures
 
 ```bash
-# Get detailed action-level status (shows SQL errors)
+# Get per-action status with SQL error details
 curl -s -H "Authorization: Bearer $ACCESS_TOKEN" \
   "${BASE}/${INVOCATION_NAME}:query" | python3 -c "
 import sys, json
@@ -118,27 +155,66 @@ for action in data.get('workflowInvocationActions', []):
 "
 ```
 
-## Verification
-- Empty `{}` response from writeFile, commit, push = success
-- compilationResults response contains `name` field
-- workflowInvocations response contains `name` field
-- Poll returns `state: SUCCEEDED`
-- Query target table in BQ to verify data
+## Verification Checklist
 
-## Notes
+| Step | Success Signal |
+|---|---|
+| writeFile | Empty `{}` response |
+| commit | Empty `{}` response |
+| push | Empty `{}` response |
+| compilationResults | Response contains `name` field |
+| workflowInvocations | Response contains `name` field |
+| Poll | `state: SUCCEEDED` |
+| End-to-end | Query target table in BigQuery |
 
-### Critical Gotchas
-1. **Colon-prefixed actions**: Endpoints use `:writeFile`, `:commit`, `:push` — the
-   colon must be part of the URL path, not the workspace name. URL-encoding can break this.
-2. **Base64 encoding**: `writeFile` requires `contents` to be base64-encoded, not raw text.
-3. **Commit field names**: The commit endpoint uses `paths` (array of strings), NOT
-   `fileOperations`. The error "Unknown name fileOperations" means wrong field.
-4. **Dataform region**: Often different from Cloud Run region (e.g., `europe-north1` vs
-   `us-central1`). Check your Dataform repo settings.
-5. **Release config**: Compilation requires a release config reference. The full resource
-   path format is `projects/{project}/locations/{region}/repositories/{repo}/releaseConfigs/{config}`.
-6. **Success responses**: Successful writeFile/commit/push return empty `{}` — not an error.
+## Gotcha Quick Reference
 
-### From Cloud Workflows
-The same pattern works in YAML workflows using `http.post` with `auth: {type: OAuth2}`.
-See the `dataform_wait_loop` subworkflow pattern for polling.
+| Gotcha | Wrong | Right |
+|---|---|---|
+| Action endpoints | `workspace/writeFile` | `workspace:writeFile` (colon prefix) |
+| File contents | Raw text in `contents` | Base64-encoded string |
+| Commit field | `fileOperations: [...]` | `paths: ["file.sqlx"]` |
+| Region | Using Cloud Run region | Dataform repo region (check settings) |
+| Empty response | Treating `{}` as error | `{}` = success for write/commit/push |
+| Release config path | Short name | Full resource path: `projects/{p}/locations/{r}/repositories/{repo}/releaseConfigs/{cfg}` |
+
+## Prerequisites and Compatibility
+
+Requires: `gcloud` CLI (for auth tokens), `bash`, `python3` (for JSON parsing), and `curl`.
+Works with Dataform API v1beta1. Compatible with gcloud v400+.
+Scoped to the `dataform.googleapis.com` REST surface only.
+Expects `.sqlx` files as input and requires a valid GCP project ID, region, and Dataform repository name.
+
+## Error Handling
+
+If the writeFile call fails with 404, check the colon-prefix on action endpoints (e.g., `:writeFile` not `/writeFile`), since URL-encoding can break this.
+If the commit fails with "Unknown name", use the `paths` field instead of `fileOperations`.
+When the invocation fails with state `FAILED`, query the `:query` endpoint for per-action failure reasons.
+On error from any step, verify the region matches your Dataform repo settings, because the Dataform region is often different from Cloud Run region.
+
+## Handoff and Scope Boundaries
+
+After deployment succeeds, then use BigQuery to validate the output tables.
+For Dataform CLI operations, use the CLI directly instead of this REST workflow.
+If you need to orchestrate multiple Dataform repos, for that use Cloud Workflows instead.
+
+## Idempotency
+
+`writeFile` is idempotent — safe to re-run with the same content.
+`commit` + `push` are NOT idempotent — running again on unchanged files returns an error. Guard with a diff check before committing.
+
+## Example 1: Deploy a Single Model
+
+Deploy `definitions/staging/stg_orders.sqlx` to the `analytics` workspace:
+
+1. Run `base64 -i definitions/staging/stg_orders.sqlx` to encode the file
+2. Call `:writeFile` with path `definitions/staging/stg_orders.sqlx`
+3. Call `:commit` with `paths: ["definitions/staging/stg_orders.sqlx"]`
+4. Call `:push` to sync to the default branch
+5. Create a compilation result referencing your release config
+6. Invoke with `includedTargets` for `stg_orders`
+7. Verify the invocation reaches `SUCCEEDED` state
+
+## Cloud Workflows Integration
+
+Use `http.post` with `auth: {type: OAuth2}` for the same lifecycle. Use a `dataform_wait_loop` subworkflow for polling with `sys.sleep`.
