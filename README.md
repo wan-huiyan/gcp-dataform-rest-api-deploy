@@ -1,4 +1,5 @@
 # GCP Dataform REST API Deploy
+[![GitHub release](https://img.shields.io/github/v/release/wan-huiyan/gcp-dataform-rest-api-deploy)](https://github.com/wan-huiyan/gcp-dataform-rest-api-deploy/releases) [![Claude Code](https://img.shields.io/badge/Claude_Code-skill-orange)](https://claude.com/claude-code) [![license](https://img.shields.io/github/license/wan-huiyan/gcp-dataform-rest-api-deploy)](LICENSE) [![last commit](https://img.shields.io/github/last-commit/wan-huiyan/gcp-dataform-rest-api-deploy)](https://github.com/wan-huiyan/gcp-dataform-rest-api-deploy/commits)
 
 A Claude Code skill for deploying `.sqlx` files to Google Cloud Dataform repositories via REST API — without the Dataform CLI.
 
