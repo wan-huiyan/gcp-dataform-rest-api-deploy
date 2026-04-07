@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "wan-huiyan-gcp-dataform-rest-api-deploy",
+  "description": "Single-plugin marketplace for gcp-dataform-rest-api-deploy — Deploy .sqlx files to Google Cloud Dataform via REST API without the CLI",
+  "owner": {
+    "name": "wan-huiyan"
+  },
+  "plugins": [
+    {
+      "name": "gcp-dataform-rest-api-deploy",
+      "source": "./plugins/gcp-dataform-rest-api-deploy",
+      "description": "Deploy .sqlx files to Google Cloud Dataform via REST API without the CLI",
+      "version": "1.1.0"
+    }
+  ]
+}
